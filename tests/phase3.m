@@ -1,8 +1,6 @@
 %% move to take images
-gripperTranslation = [0.45 0.45 0.5]; gripperRotation = [1.8 -pi 0]; %  [Z Y X]radian
-tform = eul2tform(gripperRotation); tform(1:3,4) = gripperTranslation'; % set translation in homogeneous transform
-[configSoln, solnInfo] =ik('tool0',tform,ikWeights,initialIKGuess);
-trajGoal = packTrajGoal(configSoln,trajGoal); sendGoal(trajAct,trajGoal);
+poseToTakePics = [0.45 0.45 0.45 1.8 -pi 0]; 
+move(poseToTakePics)
 pause(10);
 
 %% RGB Image processing
@@ -29,50 +27,9 @@ annotations = strcat(labelStrs, ': ', string(scores));
 rgbImageMat = insertObjectAnnotation(rgbImageMat, 'rectangle', bboxes, annotations);
 imshow(rgbImageMat);
 
-%% Depth Image processing
+%% Depth Image Processing
 
-points = receive(pointsSub);
-xyz = rosReadXYZ(points);
-ptCloud = pointCloud(xyz);
-
-tfTree = rostf;
-tform = getTransform(tfTree, 'base', 'camera_depth_link');
-translation = [tform.Transform.Translation.X, ...
-               tform.Transform.Translation.Y, ...
-               tform.Transform.Translation.Z];
-quaternion = [tform.Transform.Rotation.W, ...
-              tform.Transform.Rotation.X, ...
-              tform.Transform.Rotation.Y, ...
-              tform.Transform.Rotation.Z];
-rotMatrix = quat2rotm(quaternion);
-tform1 = [rotMatrix, translation'; 0 0 0 1];
-tform2 = [0 1 0 0; -1 0 0 0; 0 0 1 0; 0 0 0 1];
-tform = tform2 * tform1;
-rot = tform(1:3, 1:3);
-trans = tform(1:3,4)';
-geometricTform = rigid3d(rot, trans);
-ptCloud_converted = pctransform(ptCloud, geometricTform);
-
-pcshow(ptCloud_converted);
-xlabel('X (m)');
-ylabel('Y (m)');
-zlabel('Z (m)');
-title('Point Cloud');
-
-%%
-K = [554.3827128226441 0.0 320.5; 0.0 554.3827128226441 240.5; 0.0 0.0 1.0];
-points = ptCloud.Location;
-world_points = ptCloud_converted.Location;
-projectedPoints = (K * points')';
-projectedPoints = projectedPoints ./ projectedPoints(:, 3);
-projectedPoints = round(projectedPoints);
-xyz_uv = zeros(480,640,3);
-for i=1:size(points)
-    if any(isnan(projectedPoints(i)))
-        continue;
-    end
-    xyz_uv(projectedPoints(i,2),projectedPoints(i,1),:) = world_points(i,:);
-end
+xyz_uv = get_xyz_uv_from_depthimg();
 
 for obj=1:size(labels)
     obj_points = xyz_uv(bboxes(obj,2):bboxes(obj,2)+bboxes(obj,4),bboxes(obj,1):bboxes(obj,1)+bboxes(obj,3),:);
@@ -80,7 +37,7 @@ for obj=1:size(labels)
     obj_pointcloud = pointCloud(obj_points);
     pcshow(obj_pointcloud);
     hold on;
-    if any(obj_points(:,3)>0.03)
+    if any(obj_points(:,3)>0)
         angleRad = -1;
     else
         [K1, V1] = convhull(obj_points);
@@ -95,4 +52,3 @@ for obj=1:size(labels)
     
     disp(['Object:', labels(obj), 'with orientation:', num2str(angleRad), ' Radian ']);
 end
-

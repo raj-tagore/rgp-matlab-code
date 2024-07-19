@@ -6,8 +6,8 @@ sendGoal(trajAct,trajGoal);
 pause(15);
 
 %%
-desiredPose = [0 0.25 0.55 pi pi 0];
-move(desiredPose);
+poseToTakePics = [0 0.25 0.55 pi pi 0];
+move(poseToTakePics);
 
 %%
 % desiredPos = [-1.8, 0.0, 1.0, -0.5, 0.76, 0.0, -0.5];

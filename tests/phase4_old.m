@@ -25,10 +25,52 @@ labelStrs = classNames(labels);
 annotations = strcat(labelStrs, ': ', string(scores));
 rgbImageMat = insertObjectAnnotation(rgbImageMat, 'rectangle', bboxes, annotations);
 imshow(rgbImageMat);
+hold on;
 
-%% Depth Image Processing
+%% Depth Image processing
 
-xyz_uv = get_xyz_uv_from_depthimg();
+points = receive(pointsSub);
+xyz = rosReadXYZ(points);
+ptCloud = pointCloud(xyz);
+
+tfTree = rostf;
+tform = getTransform(tfTree, 'base', 'camera_depth_link');
+translation = [tform.Transform.Translation.X, ...
+               tform.Transform.Translation.Y, ...
+               tform.Transform.Translation.Z];
+quaternion = [tform.Transform.Rotation.W, ...
+              tform.Transform.Rotation.X, ...
+              tform.Transform.Rotation.Y, ...
+              tform.Transform.Rotation.Z];
+rotMatrix = quat2rotm(quaternion);
+tform1 = [rotMatrix, translation'; 0 0 0 1];
+tform2 = [0 1 0 0; -1 0 0 0; 0 0 1 0; 0 0 0 1];
+tform = tform2 * tform1;
+rot = tform(1:3, 1:3);
+trans = tform(1:3,4)';
+geometricTform = rigid3d(rot, trans);
+ptCloud_converted = pctransform(ptCloud, geometricTform);
+
+pcshow(ptCloud_converted);
+xlabel('X (m)');
+ylabel('Y (m)');
+zlabel('Z (m)');
+title('Point Cloud');
+
+%%
+K = [554.3827128226441 0.0 320.5; 0.0 554.3827128226441 240.5; 0.0 0.0 1.0];
+points = ptCloud.Location;
+world_points = ptCloud_converted.Location;
+projectedPoints = (K * points')';
+projectedPoints = projectedPoints ./ projectedPoints(:, 3);
+projectedPoints = round(projectedPoints);
+xyz_uv = zeros(480,640,3);
+for i=1:size(points)
+    if any(isnan(projectedPoints(i)))
+        continue;
+    end
+    xyz_uv(projectedPoints(i,2),projectedPoints(i,1),:) = world_points(i,:);
+end
 
 for obj=1:size(labels)
     obj_points = xyz_uv(bboxes(obj,2):bboxes(obj,2)+bboxes(obj,4),bboxes(obj,1):bboxes(obj,1)+bboxes(obj,3),:);
@@ -51,3 +93,4 @@ for obj=1:size(labels)
     
     disp(['Object:', labels(obj), 'with orientation:', num2str(angleRad), ' Radian ']);
 end
+

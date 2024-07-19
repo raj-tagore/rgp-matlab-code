@@ -27,9 +27,7 @@ rgbImageMat = insertObjectAnnotation(rgbImageMat, 'rectangle', bboxes, annotatio
 imshow(rgbImageMat);
 
 %% Depth Image Processing
-
 xyz_uv = get_xyz_uv_from_depthimg();
-
 for obj=1:size(labels)
     obj_points = xyz_uv(bboxes(obj,2):bboxes(obj,2)+bboxes(obj,4),bboxes(obj,1):bboxes(obj,1)+bboxes(obj,3),:);
     obj_points = reshape(obj_points,[],3);
