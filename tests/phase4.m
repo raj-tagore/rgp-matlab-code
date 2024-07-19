@@ -1,7 +1,6 @@
 % move to take images
-desiredPos = [0 0.75 0.5]; % [x y z] 
-desiredOri = "x";
-move(desiredPos, desiredOri);
+desiredPos = [0 0.75 0.5 pi pi 0]; % [x y z] 
+move(desiredPos);
 
 %% RGB Image processing
 
@@ -9,7 +8,7 @@ rgbImageRaw = receive(rgbSub);
 rgbImageMat = rosReadImage(rgbImageRaw);
 [bboxes, scores, labels] = detect(trainedDetector, rgbImageMat);
 
-high_score_indices = scores >= 0.69;
+high_score_indices = scores >= 0.5;
 bboxes = bboxes(high_score_indices, :);
 scores = scores(high_score_indices);
 labels = labels(high_score_indices); 

@@ -1,7 +1,7 @@
-function pickDrop(objectLocation, objectOrientation, objectGripWidth, bin)
+function pickDrop(poseAndGripwidth, bin)
     global gripAct gripGoal jointSub initialIKGuess
 
-    objectLocation, objectOrientation
+    poseAndGripwidth
 
     % reset initialIKGuess to current config
     jointMsg = receive(jointSub);
@@ -11,31 +11,31 @@ function pickDrop(objectLocation, objectOrientation, objectGripWidth, bin)
     end
     
     % go to pre-grasp
-    targetPos = [objectLocation(1) objectLocation(2) objectLocation(3)+0.2];
-    move(targetPos, objectOrientation);
+    targetPose = poseAndGripwidth(1:6);
+    targetPose(3) = poseAndGripwidth(3)+0.2;
+    move(targetPose);
 
     % go to grasp
-    targetPos = objectLocation;
-    move(targetPos, objectOrientation);
+    targetPose = poseAndGripwidth(1:6);
+    move(targetPose);
 
     % grasp object
-    gripGoal=packGripGoal(objectGripWidth,gripGoal);
+    gripGoal=packGripGoal(poseAndGripwidth(7),gripGoal);
     sendGoal(gripAct,gripGoal);
     pause(10)
 
     % go to pre-grasp again
-    targetPos = [objectLocation(1) objectLocation(2) objectLocation(3)+0.2];
-    move(targetPos, objectOrientation)
+    targetPose = poseAndGripwidth;
+    targetPose(3) = poseAndGripwidth(3)+0.2;
+    move(targetPose)
     
     % go to bin
     if bin == "blue"
-        binPos = [0.5 -0.3 0.3];
-        binOri = [0 0.71 -0.71 0];
+        binPose = [0.5 -0.3 0.3 pi/2 pi 0];
     elseif bin == "green"
-        binPos = [-0.5 -0.3 0.3];
-        binOri = [0 0.71 0.71 0];
+        binPose = [-0.5 -0.3 0.3 -pi/2 pi 0];
     end
-    move(binPos, "y");
+    move(binPose);
 
     % drop
     gripGoal=packGripGoal(0,gripGoal);

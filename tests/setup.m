@@ -1,8 +1,8 @@
 rosshutdown; 
-setenv('ROS_MASTER_URI','http://169.254.33.59:11311/'); setenv('ROS_IP','172.17.80.1');
-rosinit("169.254.33.59");
+setenv('ROS_MASTER_URI','http://172.17.84.234:11311/'); setenv('ROS_IP','172.17.80.1');
+rosinit("172.17.84.234");
 
-global gripAct gripGoal trajAct trajGoal jointSub rgbSub pointsSub UR5e ik ikWeights initialIKGuess tfTree
+global gripAct gripGoal trajAct trajGoal jointSub rgbSub depthSub pointsSub UR5e ik ikWeights initialIKGuess tfTree
 
 [gripAct,gripGoal] = rosactionclient('/gripper_controller/follow_joint_trajectory','control_msgs/FollowJointTrajectory');
 gripAct.FeedbackFcn = [];
@@ -10,6 +10,7 @@ gripAct.FeedbackFcn = [];
 trajAct.FeedbackFcn = []; 
 jointSub = rossubscriber("/joint_states");
 rgbSub = rossubscriber("/camera/rgb/image_raw", "sensor_msgs/Image", "DataFormat", "struct");
+depthSub = rossubscriber("/camera/depth/image_raw", "sensor_msgs/Image", "DataFormat","struct");
 pointsSub = rossubscriber("camera/depth/points", "sensor_msgs/PointCloud2", "DataFormat","struct");
 tfTree = rostf;
 
@@ -30,4 +31,4 @@ initialIKGuess(3).JointPosition = 0.3; initialIKGuess(1).JointPosition = -1.5;
 trajGoal = packTrajGoal(initialIKGuess,trajGoal);
 sendGoal(trajAct,trajGoal); 
 %%
-load('RobocupDetector1');
+load('RobocupDetector1.mat');

@@ -1,12 +1,7 @@
 %%
-% Notes: Gripper straight, (gripper pointing down and camera image
-% straight) is oritentation (pi pi 0). to turn 90 degrees left, the
-% orientation would be (-pi/2 pi 0) and to turn 90 degrees right the
-% orientation would be (pi/2 pi 0). 
-% Right rotation is +ve
+% Notes: Gripper straight, (gripper pointing down and camera straig
 
-% input here is (x, y, z, rotz, roty, rotx, gripwidth)
-% x is right, y is straight and z is up.
+
 gripperPoseAndGripWidth = [
     -0.35 -0.007 0.23 -pi/2 -pi 0 0.228;    % can
     -0.53 -0.05 0.08 0 -pi 0 0.228;         % bottle
